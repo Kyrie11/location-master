@@ -6,6 +6,7 @@
 import os
 
 import numpy
+import pandas
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -56,26 +57,27 @@ def get_rawdata(root_dir):
     return raw_data, label_data
 
 class GetLoader(Dataset):
-    def __init__(self, root_path, data_file, raw_data, data_label):
+    def __init__(self, file_path):
         # self.data = torch.from_numpy(raw_data).float()
-        img = numpy.genfromtxt(root_dir + "" + data_file, dtype=str, delimiter=',')
-        img_pd = pd.read_csv(root_dir + "" + data_file)
-    self.file_list = os.listdir(root_dir)
-        self.data = raw_data
-        self.label = data_label
+        self.rssi_data = pandas.read_csv(file_path)
+        self.rssi_data = self.rssi_data.iloc[1:, 1:26]
+        self.label_data = self.rssi_data.loc['classification']
+        self.rssi_data = torch.from_numpy(self.rssi_data.values)
+        self.label_data = torch.from_numpy(self.label_data.values)
+        self.rssi_data = self.rssi_data.resize(self.rssi_data.shape[0],1,5,5)
 
 
 
     def __getitem__(self, item):
-        data = self.data[item]
-        labels = self.label[item]
+        data = self.rssi_data[item]
+        label = self.label_data[item]
         data = torch.tensor(data)
         # data = self.transforms(data)
-        labels = torch.tensor(labels)
-        return data, labels
+        label = torch.tensor(label)
+        return data, label
 
     def __len__(self):
-        return len(self.data)
+        return self.rssi_data.shape[0]
 
 class BLE_CNN(nn.Module):
     def __init__(self):
@@ -165,7 +167,7 @@ if __name__=="__main__":
     # torch_data = GetLoader(raw_data, label_data)
     data_tensor = torch.from_numpy(raw_data).type(torch.LongTensor)
     label_tensor = torch.from_numpy(label_data).type(torch.LongTensor)
-    torch_dataset = GetLoader(data_tensor, label_tensor)
+    torch_dataset = GetLoader('all.csv')
     train_data = DataLoader(dataset=torch_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=False, num_workers=2)
     network = BLE_CNN()
     network.to(device)
