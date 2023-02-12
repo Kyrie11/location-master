@@ -60,11 +60,13 @@ class GetLoader(Dataset):
     def __init__(self, file_path):
         # self.data = torch.from_numpy(raw_data).float()
         self.rssi_data = pandas.read_csv(file_path)
-        self.rssi_data = self.rssi_data.iloc[1:, 1:26]
-        self.label_data = self.rssi_data.loc['classification']
+        self.label_data = self.rssi_data['classification']
+        print(self.label_data)
+        self.rssi_data = self.rssi_data.iloc[0:, 1:26]
+
         self.rssi_data = torch.from_numpy(self.rssi_data.values)
-        self.label_data = torch.from_numpy(self.label_data.values)
         self.rssi_data = self.rssi_data.resize(self.rssi_data.shape[0],1,5,5)
+        self.label_data = torch.from_numpy(self.label_data.values)
 
 
 
